@@ -21,6 +21,14 @@ def get_args(argv=None):
     )
 
     parser.add_argument(
+        "-t",
+        "--types",
+        required=False,
+        default=False,
+        help="type of putusan"
+    )
+
+    parser.add_argument(
         "-sd",
         "--sortdate",
         dest="sort_date",
@@ -46,6 +54,14 @@ def get_args(argv=None):
         required=False,
         default=False,
         help="(optional) limit scrap page. Default False"
+    )
+
+    parser.add_argument(
+        "-c",
+        "--count",
+        required=False,
+        default=False,
+        help="(optional) limit doc like 50 doc then stop. Default False"
     )
 
     return parser.parse_args(argv)
@@ -141,95 +157,113 @@ def extract_data(link, keyword_url):
 
     try:
         link_pdf = soup.find("a", href=re.compile(r"/pdf/"))["href"]
+        ##
         file_pdf, file_name_pdf = get_pdf(link_pdf, path_pdf, download_pdf)
+        ##
         text_pdf = high_level.extract_text(file_pdf)
         text_pdf = clean_text(text_pdf)
     except:
         link_pdf = ""
         text_pdf = ""
         file_name_pdf = ""
+        print('skip')
 
-    data = [
-        judul,
-        nomor,
-        tingkat_proses,
-        klasifikasi,
-        kata_kunci,
-        tahun,
-        tanggal_register,
-        lembaga_peradilan,
-        jenis_lembaga_peradilan,
-        hakim_ketua,
-        hakim_anggota,
-        panitera,
-        amar,
-        amar_lainnya,
-        catatan_amar,
-        tanggal_musyawarah,
-        tanggal_dibacakan,
-        kaidah,
-        abstrak,
-        link,
-        link_pdf,
-        file_name_pdf,
-        text_pdf,
-    ]
-    result = pd.DataFrame(
-        [data],
-        columns=[
-            "judul",
-            "nomor",
-            "tingkat_proses",
-            "klasifikasi",
-            "kata_kunci",
-            "tahun",
-            "tanggal_register",
-            "lembaga_peradilan",
-            "jenis_lembaga_peradilan",
-            "hakim_ketua",
-            "hakim_anggota",
-            "panitera",
-            "amar",
-            "amar_lainnya",
-            "catatan_amar",
-            "tanggal_musyawarah",
-            "tanggal_dibacakan",
-            "kaidah",
-            "abstrak",
-            "link",
-            "link_pdf",
-            "file_name_pdf",
-            "text_pdf",
-        ],
-    )
+    if link_pdf != "":
+        data = [
+            judul,
+            nomor,
+            tingkat_proses,
+            klasifikasi,
+            kata_kunci,
+            tahun,
+            tanggal_register,
+            lembaga_peradilan,
+            jenis_lembaga_peradilan,
+            hakim_ketua,
+            hakim_anggota,
+            panitera,
+            amar,
+            amar_lainnya,
+            catatan_amar,
+            tanggal_musyawarah,
+            tanggal_dibacakan,
+            kaidah,
+            abstrak,
+            link,
+            link_pdf,
+            file_name_pdf,
+            text_pdf,
+        ]
 
-    keyword_url = keyword_url.replace("/", " ")
-    if keyword_url.startswith("https"):
-        keyword_url = ""
+        result = pd.DataFrame(
+            [data],
+            columns=[
+                "judul",
+                "nomor",
+                "tingkat_proses",
+                "klasifikasi",
+                "kata_kunci",
+                "tahun",
+                "tanggal_register",
+                "lembaga_peradilan",
+                "jenis_lembaga_peradilan",
+                "hakim_ketua",
+                "hakim_anggota",
+                "panitera",
+                "amar",
+                "amar_lainnya",
+                "catatan_amar",
+                "tanggal_musyawarah",
+                "tanggal_dibacakan",
+                "kaidah",
+                "abstrak",
+                "link",
+                "link_pdf",
+                "file_name_pdf",
+                "text_pdf",
+            ],
+        )
 
-    destination = f"{path_output}/putusan_ma_{keyword_url}_{today}"
-    print(destination)
-    if not os.path.isfile(f"{destination}.csv"):
-        result.to_csv(f"{destination}.csv", header=True, index=False)
-    else:
-        result.to_csv(f"{destination}.csv", mode="a", header=False, index=False)
+        keyword_url = keyword_url.replace("/", " ")
+        if keyword_url.startswith("https"):
+            keyword_url = ""
+
+        destination = f"{path_output}/putusan_ma_{keyword_url}_{today}"
+        print(destination)
+        if not os.path.isfile(f"{destination}.csv"):
+            result.to_csv(f"{destination}.csv", header=True, index=False)
+        else:
+            result.to_csv(f"{destination}.csv", mode="a", header=False, index=False)
+
+        return 1
+
+    return 0
 
 
-def run_process(keyword_url, page, sort_page):
+def run_process(keyword_url, page, sort_page, types, count):
     if keyword_url.startswith("https"):
         link = f"{keyword_url}&page={page}"
     else:
-        link = f"https://putusan3.mahkamahagung.go.id/search.html?q={keyword_url}&page={page}"
+        link = f"https://putusan3.mahkamahagung.go.id/search.html?q={keyword_url}&court={types}&page={page}"
+
     if sort_page:
         link = f"{link}&obf=TANGGAL_PUTUS&obm=desc"
 
     print(link)
+    index = 0
 
     soup = open_page(link)
     links = soup.find_all("a", {"href": re.compile("/direktori/putusan")})
 
     for link in links:
-        extract_data(link["href"], keyword_url)
+        if count is None:
+            extract_data(link["href"], keyword_url)
+
+        if index < count:
+            ix = extract_data(link["href"], keyword_url)
+            index = index + ix
+        else:
+            break
 
 
 def create_path(dest):
@@ -246,12 +280,18 @@ def create_path(dest):
 if __name__ == "__main__":
     args = get_args()
     keyword = args.keyword
+    types = args.types
     sort_date = args.sort_date
     download_pdf = args.download_pdf
     limit = args.range
+    count = args.count
 
     if not keyword:
         exit("Please provide keyword or URL")
+
+    keyword = keyword.replace(" ", "+")
+    if not types:
+        types = '097514PN26++++++++++++++++++++++'
 
     # keyword = "Pdt.Sus-BPSK"
     path_output = create_path("putusan")
@@ -275,6 +315,6 @@ if __name__ == "__main__":
     with ThreadPoolExecutor(max_workers=4) as executor:
         for page in range(last_page):
             futures.append(
-                executor.submit(run_process, keyword_url, page + 1, sort_date)
+                executor.submit(run_process, keyword_url, page + 1, sort_date, types, int(count))
             )
     wait(futures)
