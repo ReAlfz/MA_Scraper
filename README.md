@@ -26,3 +26,4 @@ Document Search Engine is a document retrieval based on a query, in this code I 
 
 Note: the code in main.py
 
+![example](3.png)
