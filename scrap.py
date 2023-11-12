@@ -294,6 +294,8 @@ if __name__ == "__main__":
     if not types:
         # types = '098298PN333+++++++++++++++++++++'
         types = '099780PN75+++++++++++++++++++++'
+    else:
+        types = f'{types}+++++++++++++++++++++'
 
     # keyword = "Pdt.Sus-BPSK"
     path_output = create_path("putusan")

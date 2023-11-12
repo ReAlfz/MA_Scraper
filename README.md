@@ -8,7 +8,7 @@ This code is used for scraping data on the website: [https://putusan3.mahkamahag
 
 ## Usage and How to use
 
-usage: filename.py -k "keyword"
+usage: python scrap.py -k "your keyword" -t "098298PN333" -sd -dp -rg "5"
 
 Note: for task from campus, i set this code only retrieve data if link download pdf from web available
 
@@ -16,7 +16,13 @@ Note: for task from campus, i set this code only retrieve data if link download 
 Optional arguments:
     -sd         Sort date (Scraping from newest) Default False
     -dp         Downloadpdf (Download pdf file) Default False
+    -t          Court type (Because encode from web, i just get from web then paste to variable or cmd) Default False
     -rg         Range (Limit range scraping from web based page) Default False
-    -c          Count (Limit how many scraping from web based download pdf) Default False
 ```
+
+# Document Search Engine
+
+Document Search Engine is a document retrieval based on a query, in this code I made it based on Amar Putusan by using the Euclidean Distance formula for similarity then displaying it in the command prompt based on the smallest Euclidean Distance and details of the data text and no putusan
+
+Note: the code in main.py
 
