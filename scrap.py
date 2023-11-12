@@ -249,6 +249,7 @@ def run_process(keyword_url, page, sort_page, types, count):
     if sort_page:
         link = f"{link}&obf=TANGGAL_PUTUS&obm=desc"
 
+
     print(link)
     index = 0
 
@@ -291,7 +292,8 @@ if __name__ == "__main__":
 
     keyword = keyword.replace(" ", "+")
     if not types:
-        types = '097514PN26++++++++++++++++++++++'
+        # types = '098298PN333+++++++++++++++++++++'
+        types = '099780PN75+++++++++++++++++++++'
 
     # keyword = "Pdt.Sus-BPSK"
     path_output = create_path("putusan")
@@ -312,9 +314,19 @@ if __name__ == "__main__":
     keyword_url = keyword
 
     futures = []
+    index = 0
     with ThreadPoolExecutor(max_workers=4) as executor:
         for page in range(last_page):
-            futures.append(
-                executor.submit(run_process, keyword_url, page + 1, sort_date, types, int(count))
-            )
+            if count:
+                if index < int(count):
+                    futures.append(
+                        executor.submit(run_process, keyword_url, page + 1, sort_date, types, int(count))
+                    )
+                else:
+                    break
+
+            else:
+                futures.append(
+                    executor.submit(run_process, keyword_url, page + 1, sort_date, types, int(count))
+                )
     wait(futures)
